@@ -1,0 +1,14 @@
+{
+  "name": "robux-store-discord-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for Robux Store order management",
+  "main": "index.js",
+"scripts": {
+  "start": "node index.js"
+},
+  "dependencies": {
+    "discord.js": "^14.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}
