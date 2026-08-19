@@ -210,7 +210,7 @@ export default function Home() {
 
           price,
 
-          phone: "",
+          phone: "01000000000",
           
           email:
             "customer@example.com",

@@ -52,15 +52,6 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!phone) {
-      return NextResponse.json(
-        {
-          error: "Phone number is required for payment.",
-        },
-        { status: 400 }
-      );
-    }
-
     const PAYMOB_SECRET_KEY =
       process.env.PAYMOB_SECRET_KEY;
 
