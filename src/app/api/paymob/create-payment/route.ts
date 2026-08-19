@@ -133,124 +133,139 @@ export async function POST(req: Request) {
             },
           ],
 
-          billing_data: {
-            first_name: username,
+         billing_data: {
+  first_name: "Customer",
+  last_name: "Robux",
+  email:
+    email ||
+    "customer@example.com",
 
-            last_name: "Customer",
+  // Paymob requires this field
+  // Customer will enter payment details on Paymob page
+  phone_number: "01000000000",
 
-            email:
-              email ||
-              "customer@example.com",
+  apartment: "NA",
+  floor: "NA",
+  street: "NA",
+  building: "NA",
+  shipping_method: "NA",
+  postal_code: "NA",
+  city: "Cairo",
+  state: "Cairo",
+  country: "EG",
+},
 
-            phone_number: phone,
+customer: {
+  first_name:
+    username || "Customer",
 
-            apartment: "NA",
+  last_name:
+    "Robux",
 
-            floor: "NA",
+  email:
+    email ||
+    "customer@example.com",
+},
 
-            street: "NA",
+special_reference: orderId,
 
-            building: "NA",
+notification_url:
+  `${APP_URL}/api/paymob/webhook`,
 
-            shipping_method: "NA",
+redirection_url:
+  `${APP_URL}/payment/complete`,
+}),
+}
+);
 
-            postal_code: "NA",
 
-            city: "NA",
+const paymobData =
+  await paymobResponse.json();
 
-            state: "NA",
 
-            country: "EG",
-          },
+if (!paymobResponse.ok) {
 
-          customer: {
-            first_name: username,
+  console.error(
+    "Paymob API error:",
+    paymobData
+  );
 
-            last_name: "Customer",
+  return NextResponse.json(
+    {
+      error:
+        "Could not create payment.",
 
-            email:
-              email ||
-              "customer@example.com",
-          },
-
-          special_reference: orderId,
-
-          notification_url:
-            `${APP_URL}/api/paymob/webhook`,
-
-          redirection_url:
-            `${APP_URL}/payment/complete`,
-        }),
-      }
-    );
-
-    const paymobData =
-      await paymobResponse.json();
-
-    if (!paymobResponse.ok) {
-      console.error(
-        "Paymob API error:",
-        paymobData
-      );
-
-      return NextResponse.json(
-        {
-          error:
-            "Could not create payment.",
-
-          details:
-            paymobData,
-        },
-        { status: 500 }
-      );
+      details:
+        paymobData,
+    },
+    {
+      status: 500,
     }
+  );
+}
 
-    const clientSecret =
-      paymobData.client_secret;
 
-    if (!clientSecret) {
-      console.error(
-        "Paymob did not return client_secret:",
-        paymobData
-      );
+const clientSecret =
+  paymobData.client_secret;
 
-      return NextResponse.json(
-        {
-          error:
-            "Paymob payment session was not created.",
-        },
-        { status: 500 }
-      );
+
+if (!clientSecret) {
+
+  console.error(
+    "Paymob did not return client_secret:",
+    paymobData
+  );
+
+  return NextResponse.json(
+    {
+      error:
+        "Paymob payment session was not created.",
+    },
+    {
+      status: 500,
     }
+  );
+}
 
-    const checkoutUrl =
-      `https://accept.paymob.com/unifiedcheckout/` +
-      `?publicKey=${encodeURIComponent(
-        PAYMOB_PUBLIC_KEY
-      )}` +
-      `&clientSecret=${encodeURIComponent(
-        clientSecret
-      )}`;
 
-    return NextResponse.json({
-      success: true,
+const checkoutUrl =
+  `https://accept.paymob.com/unifiedcheckout/` +
+  `?publicKey=${encodeURIComponent(
+    PAYMOB_PUBLIC_KEY
+  )}` +
+  `&clientSecret=${encodeURIComponent(
+    clientSecret
+  )}`;
 
-      checkoutUrl,
 
-      orderId,
-    });
-  } catch (error) {
-    console.error(
-      "Create Paymob payment error:",
-      error
-    );
+return NextResponse.json({
 
-    return NextResponse.json(
-      {
-        error:
-          "Could not create payment.",
-      },
-      { status: 500 }
-    );
+  success: true,
+
+  checkoutUrl,
+
+  orderId,
+
+});
+
+
+} catch (error) {
+
+console.error(
+  "Create Paymob payment error:",
+  error
+);
+
+
+return NextResponse.json(
+  {
+    error:
+      "Could not create payment.",
+  },
+  {
+    status: 500,
   }
+);
+
+}
 }
