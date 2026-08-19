@@ -146,7 +146,7 @@ export default function Home() {
     }
   }
 
-  async function createOrder() {
+ async function createOrder() {
   setOrderError("");
 
   if (!user) {
@@ -182,7 +182,13 @@ export default function Home() {
   setCreatingOrder(true);
 
   try {
-    // Create payment first
+    const newOrderId =
+      "RBX-" +
+      crypto.randomUUID()
+        .replaceAll("-", "")
+        .slice(0, 10)
+        .toUpperCase();
+
     const paymentRes = await fetch(
       "/api/paymob/create-payment",
       {
@@ -191,37 +197,26 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          orderId:
-            "RBX-" +
-            crypto.randomUUID()
-              .replaceAll("-", "")
-              .slice(0, 10)
-              .toUpperCase(),
+          orderId: newOrderId,
 
           userId: user.id,
-
           username: user.username,
-
           displayName: user.displayName,
 
           amount,
-
           method,
-
           price,
 
           phone: "01000000000",
-          
+
           email:
             "customer@example.com",
         }),
       }
     );
 
-
     const paymentData =
       await paymentRes.json();
-
 
     if (!paymentRes.ok) {
       setOrderError(
@@ -231,17 +226,12 @@ export default function Home() {
       return;
     }
 
-
-    // Save temporary order id
     setOrderId(
       paymentData.orderId
     );
 
-
-    // Redirect to Paymob
     window.location.href =
       paymentData.checkoutUrl;
-
 
   } catch (error) {
 
@@ -259,49 +249,7 @@ export default function Home() {
     setCreatingOrder(false);
 
   }
-
-    try {
-      const res = await fetch(
-        "/api/orders/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: user.id,
-            username: user.username,
-            displayName: user.displayName,
-            amount,
-            method,
-            price,
-            gamePassReceive:
-              method === "gamepass"
-                ? gamePassReceive
-                : null,
-          }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setOrderError(
-          data.error || "Could not create order."
-        );
-        return;
-      }
-
-      setOrderId(data.orderId);
-      setOrderCreated(true);
-    } catch {
-      setOrderError(
-        "Could not connect to the server."
-      );
-    } finally {
-      setCreatingOrder(false);
-    }
-  }
+}
 
   function reset() {
     setUser(null);
