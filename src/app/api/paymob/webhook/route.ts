@@ -1,48 +1,111 @@
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+type OrderMetadata = {
+  orderId?: string;
+  userId?: string;
+  username?: string;
+  displayName?: string;
+  amount?: string;
+  method?: "plus" | "gamepass";
+  price?: string;
+};
+
+export async function POST(
+  req: Request
+) {
   try {
     const body = await req.json();
 
-    console.log("PAYMOB WEBHOOK:", body);
-
-
-    /*
-      Paymob sends transaction status here.
-      We only continue when payment is successful.
-    */
-
-    const success =
-      body.success === true ||
-      body.obj?.success === true;
-
-
-    if (!success) {
-      return NextResponse.json({
-        received: true,
-        status: "payment_not_successful",
-      });
-    }
-
+    console.log(
+      "PAYMOB WEBHOOK:",
+      JSON.stringify(
+        body,
+        null,
+        2
+      )
+    );
 
     const transaction =
       body.obj || body;
 
+    const success =
+      transaction.success === true;
+
+    if (!success) {
+      return NextResponse.json({
+        received: true,
+        status:
+          "payment_not_successful",
+      });
+    }
+
+    /*
+      Get metadata containing the
+      ORIGINAL website order information.
+    */
+
+    const metadata: OrderMetadata =
+      transaction.order?.metadata ||
+      transaction.metadata ||
+      {};
+
+    console.log(
+      "ORDER METADATA:",
+      metadata
+    );
 
     const orderId =
-      transaction.order?.merchant_order_id ||
+      metadata.orderId ||
+      transaction.order
+        ?.merchant_order_id ||
       transaction.merchant_order_id ||
       transaction.special_reference;
 
+    const username = String(
+      metadata.username || ""
+    ).trim();
 
-    if (!orderId) {
+    const displayName = String(
+      metadata.displayName ||
+      username
+    ).trim();
+
+    const userId = Number(
+      metadata.userId
+    );
+
+    const amount = Number(
+      metadata.amount
+    );
+
+    const method =
+      metadata.method;
+
+    const price = Number(
+      metadata.price
+    );
+
+    /*
+      Validate the original order data.
+    */
+
+    if (
+      !orderId ||
+      !username
+    ) {
       console.error(
-        "Missing order id from Paymob webhook"
+        "Missing order ID or username:",
+        {
+          orderId,
+          username,
+          metadata,
+        }
       );
 
       return NextResponse.json(
         {
-          error: "Missing order id",
+          error:
+            "Missing original order information.",
         },
         {
           status: 400,
@@ -50,20 +113,157 @@ export async function POST(req: Request) {
       );
     }
 
+    if (
+      !Number.isFinite(
+        amount
+      ) ||
+      amount <= 0
+    ) {
+      console.error(
+        "Invalid Robux amount:",
+        metadata.amount
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Invalid Robux amount.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      method !== "plus" &&
+      method !== "gamepass"
+    ) {
+      console.error(
+        "Invalid delivery method:",
+        method
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Invalid delivery method.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      !Number.isFinite(
+        price
+      ) ||
+      price <= 0
+    ) {
+      console.error(
+        "Invalid order price:",
+        metadata.price
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Invalid order price.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     /*
-      Here we notify your order system
-      after successful payment.
+      Discord bot API
     */
 
     const BOT_API =
-      process.env.DISCORD_BOT_API_URL ||
-      "http://localhost:3001";
-
+      process.env.DISCORD_BOT_API_URL;
 
     const SECRET =
       process.env.ORDER_API_SECRET;
 
+    if (
+      !BOT_API ||
+      !SECRET
+    ) {
+      console.error(
+        "Missing Discord bot environment variables."
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Server configuration error.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    /*
+      This is the exact order
+      sent to your Discord bot.
+    */
+
+    const discordOrder = {
+      orderId,
+
+      userId:
+        Number.isFinite(userId) &&
+        userId > 0
+          ? userId
+          : null,
+
+      username,
+
+      displayName,
+
+      /*
+        REAL ROBUX AMOUNT
+        Example: 100
+        NOT payment price
+      */
+
+      amount,
+
+      robux:
+        amount,
+
+      /*
+        Must be:
+        plus
+        OR
+        gamepass
+      */
+
+      method,
+
+      /*
+        Payment price
+      */
+
+      price,
+
+      status:
+        "PAID",
+
+      estimatedDelivery:
+        "10-15 minutes",
+
+      createdAt:
+        new Date().toISOString(),
+    };
+
+    console.log(
+      "SENDING ORDER TO DISCORD:",
+      discordOrder
+    );
 
     const orderResponse =
       await fetch(
@@ -76,71 +276,84 @@ export async function POST(req: Request) {
               "application/json",
 
             "x-order-secret":
-              SECRET || "",
+              SECRET,
           },
 
-          body: JSON.stringify({
-            orderId,
-
-            username:
-              transaction.billing_data
-                ?.first_name ||
-              "Customer",
-
-            displayName:
-              "Paymob Customer",
-
-            userId:
-              null,
-
-            amount:
-              transaction.amount_cents
-                ? transaction.amount_cents / 100
-                : 0,
-
-            method:
-              "paymob",
-
-            price:
-              transaction.amount_cents
-                ? transaction.amount_cents / 100
-                : 0,
-
-            status:
-              "PAID",
-          }),
+          body:
+            JSON.stringify(
+              discordOrder
+            ),
         }
       );
 
+    let result;
 
-    const result =
-      await orderResponse.json();
-
+    try {
+      result =
+        await orderResponse.json();
+    } catch {
+      result = {
+        error:
+          "Invalid response from Discord bot.",
+      };
+    }
 
     console.log(
-      "Discord order result:",
+      "DISCORD ORDER RESULT:",
       result
     );
 
+    if (
+      !orderResponse.ok
+    ) {
+      console.error(
+        "Discord bot rejected order:",
+        result
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            result.error ||
+            "Could not send order to Discord.",
+        },
+        {
+          status: 502,
+        }
+      );
+    }
+
+    console.log(
+      `SUCCESSFUL PAYMENT SENT TO DISCORD: ${orderId}`
+    );
 
     return NextResponse.json({
       received: true,
       success: true,
-    });
 
+      orderId,
+
+      robux:
+        amount,
+
+      method,
+
+      messageId:
+        result.messageId ||
+        null,
+    });
 
   } catch (error) {
 
     console.error(
-      "Paymob webhook error:",
+      "PAYMOB WEBHOOK ERROR:",
       error
     );
-
 
     return NextResponse.json(
       {
         error:
-          "Webhook failed",
+          "Webhook failed.",
       },
       {
         status: 500,
