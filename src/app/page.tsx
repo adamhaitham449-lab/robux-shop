@@ -181,33 +181,41 @@ export default function Home() {
 
   setCreatingOrder(true);
 
-  try {
-    const newOrderId =
-      "RBX-" +
-      crypto.randomUUID()
-        .replaceAll("-", "")
-        .slice(0, 10)
-        .toUpperCase();
+  const newOrderId =
+    "RBX-" +
+    crypto.randomUUID()
+      .replaceAll("-", "")
+      .slice(0, 10)
+      .toUpperCase();
 
+  try {
     const paymentRes = await fetch(
       "/api/paymob/create-payment",
       {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
         },
+
         body: JSON.stringify({
           orderId: newOrderId,
 
           userId: user.id,
+
           username: user.username,
-          displayName: user.displayName,
+
+          displayName:
+            user.displayName,
 
           amount,
+
           method,
+
           price,
 
-          phone: "01000000000",
+          phone:
+            "01000000000",
 
           email:
             "customer@example.com",
@@ -215,8 +223,10 @@ export default function Home() {
       }
     );
 
+
     const paymentData =
       await paymentRes.json();
+
 
     if (!paymentRes.ok) {
       setOrderError(
@@ -226,12 +236,15 @@ export default function Home() {
       return;
     }
 
+
     setOrderId(
       paymentData.orderId
     );
 
+
     window.location.href =
       paymentData.checkoutUrl;
+
 
   } catch (error) {
 
