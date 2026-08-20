@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const http = require("http");
@@ -17,35 +16,63 @@ const {
   Routes,
 } = require("discord.js");
 
+
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+  ],
 });
 
-const TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+const TOKEN =
+  process.env.DISCORD_BOT_TOKEN;
+
 const ORDERS_CHANNEL_ID =
-  process.env.DISCORD_ORDERS_CHANNEL_ID;
-const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
-const GUILD_ID = process.env.DISCORD_GUILD_ID;
+  process.env
+    .DISCORD_ORDERS_CHANNEL_ID;
+
+const CLIENT_ID =
+  process.env.DISCORD_CLIENT_ID;
+
+const GUILD_ID =
+  process.env.DISCORD_GUILD_ID;
+
 const ORDER_API_SECRET =
   process.env.ORDER_API_SECRET;
 
-const PORT = Number(process.env.PORT || 3001);
+const PORT =
+  Number(
+    process.env.PORT || 3001
+  );
 
 
 // ==========================================
 // CHECK ENVIRONMENT VARIABLES
 // ==========================================
 
-for (const [name, value] of Object.entries({
-  DISCORD_BOT_TOKEN: TOKEN,
-  DISCORD_ORDERS_CHANNEL_ID:
-    ORDERS_CHANNEL_ID,
-  DISCORD_CLIENT_ID: CLIENT_ID,
-  DISCORD_GUILD_ID: GUILD_ID,
-  ORDER_API_SECRET,
-})) {
+for (
+  const [name, value]
+  of Object.entries({
+    DISCORD_BOT_TOKEN:
+      TOKEN,
+
+    DISCORD_ORDERS_CHANNEL_ID:
+      ORDERS_CHANNEL_ID,
+
+    DISCORD_CLIENT_ID:
+      CLIENT_ID,
+
+    DISCORD_GUILD_ID:
+      GUILD_ID,
+
+    ORDER_API_SECRET,
+  })
+) {
   if (!value) {
-    console.error(`Missing ${name}`);
+    console.error(
+      `Missing ${name}`
+    );
+
     process.exit(1);
   }
 }
@@ -56,10 +83,13 @@ for (const [name, value] of Object.entries({
 // ==========================================
 
 function createOrderId() {
-  return `RBX-${Math.random()
-    .toString(36)
-    .slice(2, 10)
-    .toUpperCase()}`;
+  return (
+    "RBX-" +
+    Math.random()
+      .toString(36)
+      .slice(2, 10)
+      .toUpperCase()
+  );
 }
 
 
@@ -67,90 +97,152 @@ function createOrderId() {
 // CREATE ORDER EMBED
 // ==========================================
 
-function createOrderEmbed(order) {
-  const robux = Number(
-    order.robux ?? order.amount
-  );
+function createOrderEmbed(
+  order
+) {
+  const robux =
+    Number(
+      order.robux ??
+      order.amount
+    );
+
+  const price =
+    Number(
+      order.price
+    );
 
   const isGamePass =
-    order.method === "gamepass";
+    order.method ===
+    "gamepass";
 
-  const received = isGamePass
-    ? Math.floor(robux * 0.7)
-    : robux;
+  const received =
+    isGamePass
+      ? Math.floor(
+          robux * 0.7
+        )
+      : robux;
 
-  const createdAt = new Date(
-    order.createdAt || Date.now()
-  );
+  const createdAt =
+    new Date(
+      order.createdAt ||
+      Date.now()
+    );
 
-  const timestamp = Math.floor(
-    createdAt.getTime() / 1000
-  );
+  const timestamp =
+    Math.floor(
+      createdAt.getTime() /
+      1000
+    );
+
+  const methodName =
+    isGamePass
+      ? "🎮 Game Pass"
+      : "💎 Roblox Plus";
 
   return new EmbedBuilder()
-    .setTitle("🛒 New Robux Order")
+
+    .setColor(
+      0x5865f2
+    )
+
+    .setTitle(
+      "🛒 New Robux Order"
+    )
+
     .setDescription(
       [
         `**Order ID:** \`${order.orderId}\``,
+
         "",
-        "A new order is ready for processing.",
+
+        "A new paid order is ready for processing.",
       ].join("\n")
     )
+
     .addFields(
+
       {
-        name: "👤 Customer",
+        name:
+          "👤 Customer",
+
         value: [
           `**Username:** \`${order.username}\``,
+
           `**Display Name:** ${
             order.displayName ||
+            order.username ||
             "Not provided"
           }`,
+
           `**User ID:** \`${
             order.userId ||
             "Not provided"
           }\``,
         ].join("\n"),
-        inline: false,
+
+        inline:
+          false,
       },
+
       {
-        name: "📦 Order",
+        name:
+          "📦 Order",
+
         value: [
-          `**Method:** ${
-            isGamePass
-              ? "🎮 Game Pass"
-              : "💎 Roblox Plus"
-          }`,
+          `**Method:** ${methodName}`,
+
           `**Requested:** ${robux.toLocaleString()} Robux`,
+
           `**Customer receives:** ${received.toLocaleString()} Robux`,
         ].join("\n"),
-        inline: false,
+
+        inline:
+          false,
       },
+
       {
-        name: "💰 Payment",
-        value: `**Price:** $${Number(
-          order.price
-        ).toFixed(2)}`,
-        inline: true,
-      },
-      {
-        name: "📊 Status",
+        name:
+          "💰 Payment",
+
         value:
-          "🟢 **RECEIVED & READY FOR PROCESSING**",
-        inline: true,
+          `**Price:** EGP ${price.toFixed(2)}`,
+
+        inline:
+          true,
       },
+
       {
-        name: "⏱️ Delivery",
+        name:
+          "📊 Status",
+
         value:
-          `10–15 minutes\n` +
+          "🟢 **PAYMENT RECEIVED & READY FOR PROCESSING**",
+
+        inline:
+          true,
+      },
+
+      {
+        name:
+          "⏱️ Delivery",
+
+        value:
+          "10–15 minutes\n" +
           `<t:${timestamp}:R>`,
-        inline: false,
+
+        inline:
+          false,
       }
     )
+
     .setFooter({
       text:
         "Robux Store • Order Management",
     })
-    .setTimestamp(createdAt);
+
+    .setTimestamp(
+      createdAt
+    );
 }
 
 
@@ -158,24 +250,40 @@ function createOrderEmbed(order) {
 // CREATE ORDER BUTTONS
 // ==========================================
 
-function createButtons(orderId) {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(
-        `order_success:${orderId}`
-      )
-      .setLabel("SUCCESS SENT ROBUX!")
-      .setEmoji("✅")
-      .setStyle(ButtonStyle.Success),
+function createButtons(
+  orderId
+) {
+  return new ActionRowBuilder()
+    .addComponents(
 
-    new ButtonBuilder()
-      .setCustomId(
-        `order_cancel:${orderId}`
-      )
-      .setLabel("CANCEL ORDER")
-      .setEmoji("❌")
-      .setStyle(ButtonStyle.Danger)
-  );
+      new ButtonBuilder()
+        .setCustomId(
+          `order_success:${orderId}`
+        )
+        .setLabel(
+          "SUCCESS SENT ROBUX!"
+        )
+        .setEmoji(
+          "✅"
+        )
+        .setStyle(
+          ButtonStyle.Success
+        ),
+
+      new ButtonBuilder()
+        .setCustomId(
+          `order_cancel:${orderId}`
+        )
+        .setLabel(
+          "CANCEL ORDER"
+        )
+        .setEmoji(
+          "❌"
+        )
+        .setStyle(
+          ButtonStyle.Danger
+        )
+    );
 }
 
 
@@ -183,7 +291,9 @@ function createButtons(orderId) {
 // SEND ORDER TO DISCORD
 // ==========================================
 
-async function sendOrderToDiscord(order) {
+async function sendOrderToDiscord(
+  order
+) {
   console.log(
     "📦 Sending order to Discord:",
     order.orderId
@@ -203,14 +313,20 @@ async function sendOrderToDiscord(order) {
     );
   }
 
-  const message = await channel.send({
-    embeds: [
-      createOrderEmbed(order),
-    ],
-    components: [
-      createButtons(order.orderId),
-    ],
-  });
+  const message =
+    await channel.send({
+      embeds: [
+        createOrderEmbed(
+          order
+        ),
+      ],
+
+      components: [
+        createButtons(
+          order.orderId
+        ),
+      ],
+    });
 
   console.log(
     "✅ Order sent successfully:",
@@ -225,9 +341,15 @@ async function sendOrderToDiscord(order) {
 // REGISTER SLASH COMMAND
 // ==========================================
 
-const rest = new REST({
-  version: "10",
-}).setToken(TOKEN);
+const rest =
+  new REST({
+    version:
+      "10",
+  })
+    .setToken(
+      TOKEN
+    );
+
 
 async function registerCommands() {
   try {
@@ -243,7 +365,9 @@ async function registerCommands() {
       {
         body: [
           {
-            name: "test-order",
+            name:
+              "test-order",
+
             description:
               "Create a test Robux order",
           },
@@ -254,6 +378,7 @@ async function registerCommands() {
     console.log(
       "✅ Slash commands registered."
     );
+
   } catch (error) {
     console.error(
       "❌ Failed to register commands:",
@@ -268,13 +393,15 @@ async function registerCommands() {
 // ==========================================
 
 client.once(
-  "ready",
+  "clientReady",
   async () => {
+
     console.log(
       `🤖 Bot is online as ${client.user.tag}`
     );
 
     try {
+
       const channel =
         await client.channels.fetch(
           ORDERS_CHANNEL_ID
@@ -282,10 +409,13 @@ client.once(
 
       console.log(
         `📍 Orders channel: ${
-          channel?.name || "NOT FOUND"
+          channel?.name ||
+          "NOT FOUND"
         }`
       );
+
     } catch (error) {
+
       console.error(
         "❌ Could not fetch orders channel:",
         error
@@ -303,11 +433,15 @@ client.once(
 
 client.on(
   "interactionCreate",
-  async (interaction) => {
+  async (
+    interaction
+  ) => {
+
     console.log(
       "🔔 Interaction received:",
       interaction.type,
-      interaction.isChatInputCommand()
+      interaction
+        .isChatInputCommand()
         ? interaction.commandName
         : interaction.isButton()
           ? interaction.customId
@@ -322,8 +456,10 @@ client.on(
       // ------------------------------------
 
       if (
-        interaction.isChatInputCommand()
+        interaction
+          .isChatInputCommand()
       ) {
+
         if (
           interaction.commandName !==
           "test-order"
@@ -332,32 +468,46 @@ client.on(
         }
 
         await interaction.deferReply({
-          ephemeral: true,
+          ephemeral:
+            true,
         });
-
-        console.log(
-          "⏳ Test-order interaction deferred"
-        );
 
         const orderId =
           createOrderId();
 
         const order = {
           orderId,
-          userId: "5696295687",
-          username: "DODO_446565",
+
+          userId:
+            "5696295687",
+
+          username:
+            "DODO_446565",
+
           displayName:
             "Test Customer",
-          method: "plus",
-          robux: 100,
-          amount: 100,
-          price: 1.99,
+
+          method:
+            "plus",
+
+          robux:
+            100,
+
+          amount:
+            100,
+
+          price:
+            100,
+
           status:
-            "RECEIVED",
+            "PAID",
+
           estimatedDelivery:
             "10-15 minutes",
+
           createdAt:
-            new Date().toISOString(),
+            new Date()
+              .toISOString(),
         };
 
         await sendOrderToDiscord(
@@ -370,10 +520,6 @@ client.on(
             "created successfully.",
         });
 
-        console.log(
-          "✅ Test-order interaction completed"
-        );
-
         return;
       }
 
@@ -382,96 +528,153 @@ client.on(
       // BUTTONS
       // ------------------------------------
 
-      if (interaction.isButton()) {
-        const [action, orderId] =
-          interaction.customId.split(":");
+      if (
+        interaction.isButton()
+      ) {
+
+        const [
+          action,
+          orderId,
+        ] =
+          interaction.customId
+            .split(":");
 
         if (!orderId) {
           return;
         }
 
 
+        // ----------------------------------
         // SUCCESS SENT ROBUX
-        if (action === "order_success") {
+        // ----------------------------------
+
+        if (
+          action ===
+          "order_success"
+        ) {
+
           const completedEmbed =
             EmbedBuilder.from(
-              interaction.message.embeds[0]
+              interaction.message
+                .embeds[0]
             );
 
           const updatedFields =
-            completedEmbed.data.fields.map(
-              (field) => {
-                if (
-                  field.name ===
-                  "📊 Status"
-                ) {
-                  return {
-                    name: "📊 Status",
-                    value:
-                      "🟢 **COMPLETED**",
-                    inline: true,
-                  };
-                }
+            completedEmbed
+              .data
+              .fields
+              .map(
+                (
+                  field
+                ) => {
 
-                return field;
-              }
-            );
+                  if (
+                    field.name ===
+                    "📊 Status"
+                  ) {
+
+                    return {
+                      name:
+                        "📊 Status",
+
+                      value:
+                        "🟢 **COMPLETED • ROBUX SENT**",
+
+                      inline:
+                        true,
+                    };
+                  }
+
+                  return field;
+                }
+              );
 
           completedEmbed
-            .setColor(0x57f287)
+
+            .setColor(
+              0x57f287
+            )
+
             .setFields(
               updatedFields
             )
+
             .setFooter({
               text:
-                `Completed by ` +
-                `${interaction.user.username}`,
+                `Completed by ${interaction.user.username}`,
             });
+
 
           await interaction.update({
             embeds: [
               completedEmbed,
             ],
-            components: [],
+
+            components:
+              [],
           });
 
           console.log(
-            `✅ Order completed: ${orderId} ` +
-            `by ${interaction.user.tag}`
+            `✅ Order completed: ${orderId} by ${interaction.user.tag}`
           );
 
           return;
         }
 
 
+        // ----------------------------------
         // CANCEL ORDER
-        if (action === "order_cancel") {
+        // ----------------------------------
+
+        if (
+          action ===
+          "order_cancel"
+        ) {
+
           const modal =
             new ModalBuilder()
+
               .setCustomId(
                 `cancel_reason:${orderId}`
               )
+
               .setTitle(
                 "Cancel Order"
               );
 
+
           const reasonInput =
             new TextInputBuilder()
+
               .setCustomId(
                 "reason"
               )
+
               .setLabel(
                 "Cancellation reason"
               )
+
               .setPlaceholder(
                 "Write the reason for cancelling this order..."
               )
+
               .setStyle(
-                TextInputStyle.Paragraph
+                TextInputStyle
+                  .Paragraph
               )
-              .setRequired(true)
-              .setMinLength(3)
-              .setMaxLength(500);
+
+              .setRequired(
+                true
+              )
+
+              .setMinLength(
+                3
+              )
+
+              .setMaxLength(
+                500
+              );
+
 
           const modalRow =
             new ActionRowBuilder()
@@ -479,9 +682,11 @@ client.on(
                 reasonInput
               );
 
+
           modal.addComponents(
             modalRow
           );
+
 
           await interaction.showModal(
             modal
@@ -497,10 +702,16 @@ client.on(
       // ------------------------------------
 
       if (
-        interaction.isModalSubmit()
+        interaction
+          .isModalSubmit()
       ) {
-        const [action, orderId] =
-          interaction.customId.split(":");
+
+        const [
+          action,
+          orderId,
+        ] =
+          interaction.customId
+            .split(":");
 
         if (
           action !==
@@ -510,64 +721,90 @@ client.on(
           return;
         }
 
+
         const reason =
           interaction.fields
             .getTextInputValue(
               "reason"
             );
 
+
         const originalMessage =
           interaction.message;
 
+
         const cancelledEmbed =
           EmbedBuilder.from(
-            originalMessage.embeds[0]
+            originalMessage
+              .embeds[0]
           );
+
 
         const updatedFields =
-          cancelledEmbed.data.fields.map(
-            (field) => {
-              if (
-                field.name ===
-                "📊 Status"
-              ) {
-                return {
-                  name:
-                    "📊 Status",
-                  value:
-                    "🔴 **CANCELLED**",
-                  inline: true,
-                };
-              }
+          cancelledEmbed
+            .data
+            .fields
+            .map(
+              (
+                field
+              ) => {
 
-              return field;
-            }
-          );
+                if (
+                  field.name ===
+                  "📊 Status"
+                ) {
+
+                  return {
+                    name:
+                      "📊 Status",
+
+                    value:
+                      "🔴 **CANCELLED**",
+
+                    inline:
+                      true,
+                  };
+                }
+
+                return field;
+              }
+            );
+
 
         cancelledEmbed
-          .setColor(0xed4245)
+
+          .setColor(
+            0xed4245
+          )
+
           .setFields(
             updatedFields
           )
+
           .setFooter({
             text:
-              `Cancelled by ` +
-              `${interaction.user.username}`,
+              `Cancelled by ${interaction.user.username}`,
           });
+
 
         await originalMessage.edit({
           embeds: [
             cancelledEmbed,
           ],
-          components: [],
+
+          components:
+            [],
         });
+
 
         await interaction.reply({
           content:
-            `❌ Order \`${orderId}\` ` +
-            "has been cancelled successfully.",
-          ephemeral: true,
+            `❌ Order \`${orderId}\` has been cancelled successfully.`,
+
+          ephemeral:
+            true,
         });
+
 
         console.log(
           `❌ Order cancelled: ${orderId}`
@@ -578,8 +815,7 @@ client.on(
         );
 
         console.log(
-          `Cancelled by: ` +
-          interaction.user.tag
+          `Cancelled by: ${interaction.user.tag}`
         );
 
         return;
@@ -587,32 +823,43 @@ client.on(
 
 
     } catch (error) {
+
       console.error(
         "❌ Interaction error:",
         error
       );
 
       try {
+
         if (
           interaction.isRepliable() &&
           !interaction.replied &&
           !interaction.deferred
         ) {
+
           await interaction.reply({
             content:
               "❌ An error occurred. Check the bot terminal.",
-            ephemeral: true,
+
+            ephemeral:
+              true,
           });
+
         } else if (
           interaction.isRepliable() &&
           interaction.deferred
         ) {
+
           await interaction.editReply({
             content:
               "❌ An error occurred while processing this request.",
           });
         }
-      } catch (replyError) {
+
+      } catch (
+        replyError
+      ) {
+
         console.error(
           "❌ Could not send error reply:",
           replyError
@@ -629,20 +876,56 @@ client.on(
 
 const server =
   http.createServer(
-    (req, res) => {
+    (
+      req,
+      res
+    ) => {
+
+      console.log(
+        `📡 ${req.method} ${req.url} request received`
+      );
+
+
+      // ------------------------------------
+      // RECEIVE ORDER
+      // ------------------------------------
+
       if (
-        req.method === "POST" &&
-        req.url === "/api/orders"
+        req.method ===
+          "POST" &&
+        req.url ===
+          "/api/orders"
       ) {
+
+        console.log(
+          "📥 Website request received!"
+        );
+
+
         const secret =
           req.headers[
             "x-order-secret"
           ];
 
+
+        console.log(
+          "🔐 Request secret:",
+          secret
+            ? "Received"
+            : "Missing"
+        );
+
+
         if (
           secret !==
           ORDER_API_SECRET
         ) {
+
+          console.log(
+            "❌ Invalid ORDER_API_SECRET"
+          );
+
+
           res.writeHead(
             401,
             {
@@ -651,9 +934,12 @@ const server =
             }
           );
 
+
           res.end(
             JSON.stringify({
-              success: false,
+              success:
+                false,
+
               error:
                 "Unauthorized",
             })
@@ -662,27 +948,67 @@ const server =
           return;
         }
 
-        let body = "";
+
+        let body =
+          "";
+
 
         req.on(
           "data",
-          (chunk) => {
-            body += chunk;
+          (
+            chunk
+          ) => {
+
+            body +=
+              chunk;
           }
         );
+
+
+        req.on(
+          "error",
+          (
+            error
+          ) => {
+
+            console.error(
+              "❌ Request error:",
+              error
+            );
+          }
+        );
+
 
         req.on(
           "end",
           async () => {
+
             try {
+
+              console.log(
+                "📦 Raw request body:",
+                body
+              );
+
+
               const order =
-                JSON.parse(body);
+                JSON.parse(
+                  body
+                );
+
 
               const robux =
                 Number(
                   order.robux ??
                   order.amount
                 );
+
+
+              console.log(
+                "📦 Order received:",
+                order
+              );
+
 
               if (
                 !order.orderId ||
@@ -693,6 +1019,12 @@ const server =
                 ) ||
                 robux <= 0
               ) {
+
+                console.log(
+                  "❌ Missing or invalid order information"
+                );
+
+
                 res.writeHead(
                   400,
                   {
@@ -701,9 +1033,12 @@ const server =
                   }
                 );
 
+
                 res.end(
                   JSON.stringify({
-                    success: false,
+                    success:
+                      false,
+
                     error:
                       "Missing order information",
                   })
@@ -712,20 +1047,59 @@ const server =
                 return;
               }
 
+
+              if (
+                order.method !==
+                  "plus" &&
+                order.method !==
+                  "gamepass"
+              ) {
+
+                res.writeHead(
+                  400,
+                  {
+                    "Content-Type":
+                      "application/json",
+                  }
+                );
+
+
+                res.end(
+                  JSON.stringify({
+                    success:
+                      false,
+
+                    error:
+                      "Invalid delivery method",
+                  })
+                );
+
+                return;
+              }
+
+
               order.robux =
                 robux;
 
               order.amount =
                 robux;
 
+
+              console.log(
+                `📤 Sending order ${order.orderId} to Discord...`
+              );
+
+
               const message =
                 await sendOrderToDiscord(
                   order
                 );
 
+
               console.log(
-                `📦 Website order sent to Discord: ${order.orderId}`
+                `✅ Website order sent to Discord: ${order.orderId}`
               );
+
 
               res.writeHead(
                 200,
@@ -735,32 +1109,49 @@ const server =
                 }
               );
 
+
               res.end(
                 JSON.stringify({
-                  success: true,
+                  success:
+                    true,
+
                   orderId:
                     order.orderId,
+
                   messageId:
                     message.id,
                 })
               );
-            } catch (error) {
+
+            } catch (
+              error
+            ) {
+
               console.error(
                 "❌ Order API error:",
                 error
               );
 
-              res.writeHead(
-                500,
-                {
-                  "Content-Type":
-                    "application/json",
-                }
-              );
+
+              if (
+                !res.headersSent
+              ) {
+
+                res.writeHead(
+                  500,
+                  {
+                    "Content-Type":
+                      "application/json",
+                  }
+                );
+              }
+
 
               res.end(
                 JSON.stringify({
-                  success: false,
+                  success:
+                    false,
+
                   error:
                     "Could not process order",
                 })
@@ -772,6 +1163,45 @@ const server =
         return;
       }
 
+
+      // ------------------------------------
+      // HEALTH CHECK
+      // ------------------------------------
+
+      if (
+        req.method ===
+          "GET" &&
+        req.url ===
+          "/"
+      ) {
+
+        res.writeHead(
+          200,
+          {
+            "Content-Type":
+              "application/json",
+          }
+        );
+
+
+        res.end(
+          JSON.stringify({
+            success:
+              true,
+
+            message:
+              "Discord bot and Order API are running",
+          })
+        );
+
+        return;
+      }
+
+
+      // ------------------------------------
+      // NOT FOUND
+      // ------------------------------------
+
       res.writeHead(
         404,
         {
@@ -780,10 +1210,14 @@ const server =
         }
       );
 
+
       res.end(
         JSON.stringify({
-          success: false,
-          error: "Not found",
+          success:
+            false,
+
+          error:
+            "Not found",
         })
       );
     }
@@ -796,9 +1230,32 @@ const server =
 
 server.listen(
   PORT,
+
+  "0.0.0.0",
+
   () => {
+
     console.log(
-      `🌐 Order API: http://localhost:${PORT}/api/orders`
+      `🌐 Order API running on port ${PORT}`
+    );
+  }
+);
+
+
+// ==========================================
+// SERVER ERROR
+// ==========================================
+
+server.on(
+  "error",
+
+  (
+    error
+  ) => {
+
+    console.error(
+      "❌ HTTP server error:",
+      error
     );
   }
 );
@@ -808,5 +1265,20 @@ server.listen(
 // START DISCORD BOT
 // ==========================================
 
-client.login(TOKEN);
+client.login(
+  TOKEN
+).catch(
+  (
+    error
+  ) => {
 
+    console.error(
+      "❌ Failed to login Discord bot:",
+      error
+    );
+
+    process.exit(
+      1
+    );
+  }
+);
