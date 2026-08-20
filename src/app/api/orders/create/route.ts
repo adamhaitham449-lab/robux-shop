@@ -126,8 +126,8 @@ export async function POST(req: Request) {
     console.log("NEW ORDER:", order);
 
     const botUrl =
-      process.env.DISCORD_BOT_API_URL ||
-      "http://localhost:3001";
+  process.env.DISCORD_BOT_API_URL ||
+  "http://78.154.103.20:13956";
 
     const secret = process.env.ORDER_API_SECRET;
 

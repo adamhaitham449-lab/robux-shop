@@ -31,9 +31,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const botUrl =
-      process.env.DISCORD_BOT_API_URL ||
-      "http://localhost:3001";
+   const botUrl =
+  process.env.DISCORD_BOT_API_URL ||
+  "http://78.154.103.20:13956";
 
     const secret = process.env.ORDER_API_SECRET;
 

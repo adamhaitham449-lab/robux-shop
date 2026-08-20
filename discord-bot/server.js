@@ -222,8 +222,7 @@ client.once("ready", () => {
     `✅ Discord bot online as ${client.user.tag}`
   );
 
-  app.listen(PORT, () => {
-
+app.listen(PORT, "0.0.0.0", () => {
     console.log(
       `✅ Order API running on port ${PORT}`
     );
