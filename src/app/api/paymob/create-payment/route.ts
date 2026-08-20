@@ -82,7 +82,7 @@ export async function POST(req: Request) {
 
     const APP_URL =
       process.env.APP_URL ||
-      "http://localhost:3000";
+      "https://robux-shop-one.vercel.app/";
 
     const amountCents = Math.round(
       priceEGP * 100
