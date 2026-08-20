@@ -261,8 +261,16 @@ export async function POST(req: Request) {
             },
 
             // ID الطلب
-            special_reference:
-              orderId,
+           special_reference: JSON.stringify({
+  orderId,
+  userId,
+  username,
+  displayName:
+    displayName || username,
+  amount,
+  method,
+  price: priceEGP,
+}),
 
             // أهم جزء:
             // حفظ بيانات الطلب الأصلية

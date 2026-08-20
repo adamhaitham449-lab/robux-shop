@@ -44,46 +44,79 @@ export async function POST(
       ORIGINAL website order information.
     */
 
-    const metadata: OrderMetadata =
-      transaction.order?.metadata ||
-      transaction.metadata ||
-      {};
+    let orderData: OrderMetadata = {};
+
+const reference =
+  transaction.order?.special_reference ||
+  transaction.special_reference;
+
+if (reference) {
+  try {
+    orderData =
+      JSON.parse(reference);
 
     console.log(
-      "ORDER METADATA:",
-      metadata
+      "ORDER DATA FROM SPECIAL REFERENCE:",
+      orderData
     );
-
-    const orderId =
-      metadata.orderId ||
-      transaction.order
-        ?.merchant_order_id ||
-      transaction.merchant_order_id ||
-      transaction.special_reference;
-
-    const username = String(
-      metadata.username || ""
-    ).trim();
-
-    const displayName = String(
-      metadata.displayName ||
-      username
-    ).trim();
-
-    const userId = Number(
-      metadata.userId
+  } catch {
+    console.log(
+      "Special reference is not JSON:",
+      reference
     );
+  }
+}
 
-    const amount = Number(
-      metadata.amount
-    );
+const metadata =
+  transaction.order?.metadata ||
+  transaction.metadata ||
+  {};
 
-    const method =
-      metadata.method;
+console.log(
+  "ORDER METADATA:",
+  metadata
+);
 
-    const price = Number(
-      metadata.price
-    );
+const orderId = String(
+  orderData.orderId ||
+  metadata.orderId ||
+  reference ||
+  ""
+).trim();
+
+const username = String(
+  orderData.username ||
+  metadata.username ||
+  transaction.billing_data
+    ?.first_name ||
+  ""
+).trim();
+
+const displayName = String(
+  orderData.displayName ||
+  metadata.displayName ||
+  username
+).trim();
+
+const userId = Number(
+  orderData.userId ||
+  metadata.userId
+);
+
+const amount = Number(
+  orderData.amount ||
+  metadata.amount
+);
+
+const method =
+  orderData.method ||
+  metadata.method;
+
+const price = Number(
+  orderData.price ||
+  metadata.price
+);
+
 
     /*
       Validate the original order data.
